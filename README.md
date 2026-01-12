@@ -1,4 +1,4 @@
-Deploy Python API over Render
+**Deploy Python API over Render**
 🚀 Deploy Python API on Render (Step by Step)
 🎯 Goal
 
@@ -187,3 +187,72 @@ Expected response:
 Why is Swagger (/docs) extremely helpful for Salesforce developers?
 
 <img width="1536" height="1024" alt="ChatGPT Image Jan 12, 2026, 07_37_03 AM" src="https://github.com/user-attachments/assets/df13ddb1-e2b9-4388-ae52-83f69ee7f8c6" />
+
+--
+**Setup SFDC**
+
+Named Credential (VERY IMPORTANT)
+
+Setup → Named Credentials
+
+Setting	Value
+Label	Risk_API
+URL	[https://risk-api.onrender.com](https://risk-scoring-api-rogq.onrender.com)
+
+Auth	No Auth (for now)
+Callout Allowed	✅
+
+📌 This avoids hardcoding URLs in Apex.
+
+🔍 Checkpoint 2
+
+Why do we never hardcode API URLs in Apex?
+
+⚡ STEP 5: Apex Integration Layer
+5.1 Apex Service Class
+public with sharing class RiskScoringService {
+
+  public class  RiskRequest {
+        public integer age;
+        public Decimal income;
+        public Integer   conditions;
+    }
+    public class RiskResponse {
+       @InvocableVariable   public Integer riskScore;
+       @InvocableVariable    public String riskLevel;
+    }
+   @InvocableMethod(label='Get Patient Risk score')
+    public static List<RiskResponse> getRiskScore(List<String> jsonInput) {
+
+        HttpRequest req = new HttpRequest();
+        req.setEndpoint('callout:Risk_API/risk-score');
+        req.setMethod('POST');
+        req.setHeader('Content-Type', 'application/json');
+
+     
+        List<RiskRequest> body = (List<RiskRequest >)JSON.deserialize(
+                jsonInput[0],     List<RiskRequest>.class
+            );
+        req.setBody(JSON.serialize(body[0]));
+        req.setTimeout(2000);
+
+        Http http = new Http();
+        HttpResponse res = http.send(req);
+        List<RiskScoringService.RiskResponse> lstes=new List<RiskScoringService.RiskResponse>();
+        if (res.getStatusCode() == 200) {
+        RiskResponse redata=(RiskResponse) JSON.deserialize(res.getBody(), RiskResponse.class);
+        
+        
+          lstes.add(redata);
+        } 
+        else
+         {
+            throw new CalloutException(
+                'Risk API failed: ' + res.getBody()
+            );
+        }
+        return lstes;
+    }
+}
+
+Call Apex Class from Flow and pass json string 
