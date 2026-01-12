@@ -255,4 +255,7 @@ public with sharing class RiskScoringService {
     }
 }
 
-Call Apex Class from Flow and pass json string 
+**Call Apex Class from Flow and pass json string **
+
+<img width="603" height="817" alt="image" src="https://github.com/user-attachments/assets/67764706-6c7a-4e63-88a3-9441240b12e9" />
+
